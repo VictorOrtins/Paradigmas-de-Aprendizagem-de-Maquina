@@ -41,6 +41,3 @@ def get_clubs_df():
 
 clubs_df = get_clubs_df()
 
-print(clubs_df.head())
-
-
