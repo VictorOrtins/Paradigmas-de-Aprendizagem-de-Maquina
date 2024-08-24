@@ -10,8 +10,8 @@ Este projeto tem como objetivo desenvolver um modelo de aprendizagem não superv
 
 ```
 └── scrapping/                  # Pasta para realizar o scraping de dados
-    ├── brazillian_players_stats.py  # Script para coleta de dados de jogadores brasileiros
-    └── testing/               # Testes com o BeautifulSoup
-        ├── bastos_test.py    # Testes específicos para scraping
-        └── nba_test.py       # Testes adicionais para scraping
+    ├── brazillian_players_stats.py  
+    └── testing/               # Testes exploratórios com o BeautifulSoup
+        ├── bastos_test.py    
+        └── nba_test.py       
 ```
