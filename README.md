@@ -1,10 +1,17 @@
-Projeto da Disciplina de Paradigmas de Aprendizagem de Máquina
+---
 
-A ideia é desenvolver um modelo a partir de aprendizagem não supervisionado que é capaz de indicar substitutos ideais para jogadores de futebol, por exemplo em caso de lesão ou transferência
+# Projeto de Paradigmas de Aprendizagem de Máquina
 
+## Descrição
 
-└── scrapping - Pasta para realizar o scraping de dados a partir do site https://fbref.com/en/
-    ├── brazillian_players_stats.py
-    └── testing - Testes com o beautiful soup
-        ├── bastos_test.py
-        └── nba_test.py
+Este projeto tem como objetivo desenvolver um modelo de aprendizagem não supervisionada para identificar substitutos ideais para jogadores de futebol. O modelo é projetado para sugerir substitutos em situações como lesões ou transferências, com base em dados extraídos do site [FBref](https://fbref.com/en/).
+
+## Estrutura do Projeto
+
+```
+└── scrapping/                  # Pasta para realizar o scraping de dados
+    ├── brazillian_players_stats.py  # Script para coleta de dados de jogadores brasileiros
+    └── testing/               # Testes com o BeautifulSoup
+        ├── bastos_test.py    # Testes específicos para scraping
+        └── nba_test.py       # Testes adicionais para scraping
+```
