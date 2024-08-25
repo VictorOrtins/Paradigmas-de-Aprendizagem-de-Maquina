@@ -3,9 +3,9 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import os
 import warnings
-
-warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
-current_path = os.path.join(os.path.abspath(os.curdir), 'scrapping')
+import time
+from urllib.error import HTTPError
+import unicodedata
 
 def find_table_by_id_starting_with(soup, prefix):
     for element in soup.find_all('table'):  # True significa encontrar todas as tags
@@ -13,10 +13,24 @@ def find_table_by_id_starting_with(soup, prefix):
             return element
     return None
 
+def fetch_url_with_retries(url, retries=3, delay=60):
+    time.sleep(delay)
+    for _ in range(retries):
+        try:
+            html = urlopen(url)
+            return html
+        except HTTPError as e:
+            if e.code == 429:
+                print(f"Recebido HTTP 429. Tentando novamente em {delay} segundos...")
+                time.sleep(delay)
+            else:
+                raise
+    raise Exception("Falha ao acessar o URL após várias tentativas")
+
 def get_clubs_df():
     url = "https://fbref.com/pt/pais/clubes/BRA/Clubes-de-Futebol-de-Brazil"
 
-    html = urlopen(url)
+    html = fetch_url_with_retries(url)
             
     soup = BeautifulSoup(html, "html.parser")
 
@@ -66,17 +80,18 @@ def get_players_stats_from_club_df(players_df: pd.DataFrame):
         url = row['url']
 
         nome = '-'.join(row['Jogador'].split(' '))
-        print(nome)
+        nome_norm = unicodedata.normalize('NFD', nome)
+        nome = ''.join(c for c in nome_norm if not unicodedata.combining(c))
+
         url = '/'.join(url.split('/')[0:6]) + f'/scout/365_m2/Relatorio-de-Observacao-de-{nome}'
 
-        html = urlopen(url)
+        html = fetch_url_with_retries(url)
             
         soup = BeautifulSoup(html, "html.parser")
 
         table = find_table_by_id_starting_with(soup, "scout_full")
 
         if table is None:
-            print(nome, 'blz')
             continue
 
         thead = table.find('thead')
@@ -105,11 +120,15 @@ def get_players_stats_from_club_df(players_df: pd.DataFrame):
         for index_, row_ in df.iterrows():
             flat_df[f'{index_}_por_90'] = [row_['Por 90']]
             flat_df[f'{index_}_percentil'] = row_['Percentil']
-    
-        df = pd.concat([row.to_frame().T, flat_df], axis=1)
-        df.to_csv(f'{nome}.csv')
 
-        players_stats_from_club_df = pd.concat([players_stats_from_club_df, df], axis=0)
+        flat_df['Jogador'] = row['Jogador']
+        flat_df['Nação'] = row['Nação']
+        flat_df['Pos.'] = row['Pos.']
+        flat_df['Idade'] = row['Idade']
+        flat_df['url'] = row['url']
+        flat_df['clube'] = row['clube']
+
+        players_stats_from_club_df = pd.concat([players_stats_from_club_df, flat_df], axis=0)
 
 
     return players_stats_from_club_df
@@ -123,7 +142,7 @@ def get_players_stats_df(clubs_df: pd.DataFrame):
         clube = index
         url = row['url']
 
-        html = urlopen(url)
+        html = fetch_url_with_retries(url)
                 
         soup = BeautifulSoup(html, "html.parser")
 
@@ -137,7 +156,7 @@ def get_players_stats_df(clubs_df: pd.DataFrame):
 
         url_team = 'https://fbref.com' + a['href']
 
-        html = urlopen(url_team)
+        html = fetch_url_with_retries(url_team)
                 
         soup = BeautifulSoup(html, "html.parser")
 
@@ -187,11 +206,16 @@ def get_players_stats_df(clubs_df: pd.DataFrame):
     
     return player_stats_df
 
-clubs_df = get_clubs_df()
 
-player_stats_df = get_players_stats_df(clubs_df)
+if __name__ == '__main__':
+    warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+    current_path = os.path.join(os.path.abspath(os.curdir), 'scrapping')
 
-player_stats_df.to_csv('player_stats_df.csv', index=False)
+    clubs_df = get_clubs_df()
+
+    player_stats_df = get_players_stats_df(clubs_df)
+
+    player_stats_df.to_csv(os.path.join(current_path, 'player_stats_df.csv'), index=False)
 
 
 
