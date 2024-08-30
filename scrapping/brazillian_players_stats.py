@@ -13,7 +13,7 @@ def find_table_by_id_starting_with(soup, prefix):
             return element
     return None
 
-def fetch_url_with_retries(url, retries=3, delay=60):
+def fetch_url_with_retries(url, retries=3, delay=20):
     time.sleep(delay)
     for _ in range(retries):
         try:
@@ -68,7 +68,6 @@ def get_clubs_df():
     df = df.loc[:, ~df.columns.duplicated(keep='first')]
 
     df = df[(df['Camp.'] == 'Campeonato Brasileiro Série A') | (df['Camp.'] == 'Campeonato Brasileiro Série B')]
-
     return df
 
 def get_players_stats_from_club_df(players_df: pd.DataFrame):
@@ -80,6 +79,7 @@ def get_players_stats_from_club_df(players_df: pd.DataFrame):
         url = row['url']
 
         nome = '-'.join(row['Jogador'].split(' '))
+        print(nome)
         nome_norm = unicodedata.normalize('NFD', nome)
         nome = ''.join(c for c in nome_norm if not unicodedata.combining(c))
 
@@ -128,6 +128,7 @@ def get_players_stats_from_club_df(players_df: pd.DataFrame):
         flat_df['url'] = row['url']
         flat_df['clube'] = row['clube']
 
+
         players_stats_from_club_df = pd.concat([players_stats_from_club_df, flat_df], axis=0)
 
 
@@ -138,7 +139,7 @@ def get_players_stats_from_club_df(players_df: pd.DataFrame):
 def get_players_stats_df(clubs_df: pd.DataFrame):
     player_stats_df = pd.DataFrame()
 
-    for index, row in clubs_df.iloc[1:2].iterrows():
+    for index, row in clubs_df.iterrows():
         clube = index
         url = row['url']
 
@@ -198,11 +199,10 @@ def get_players_stats_df(clubs_df: pd.DataFrame):
         df['clube'] = clube
 
         players_stats_from_club_df = get_players_stats_from_club_df(df)
+        
+        players_stats_from_club_df.to_csv(f'{clube}.csv')
 
         player_stats_df = pd.concat([player_stats_df, players_stats_from_club_df], axis=0)
-
-
-        break
     
     return player_stats_df
 
